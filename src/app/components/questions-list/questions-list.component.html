@@ -1,0 +1,32 @@
+<section class="card active-section">
+  <div class="card-header">
+    <h2>{{ lang.currentLang() === 'en' ? 'Step 2: Interview Questions' : 'الخطوة 2: أسئلة المقابلة' }}</h2>
+    <p class="step-number">{{ lang.currentLang() === 'en' ? '2 of 3' : '2 من 3' }}</p>
+  </div>
+  
+  <div class="card-body">
+    <p class="questions-intro">
+      {{ lang.currentLang() === 'en' 
+         ? "We've generated the following questions based on your CV. You can review them below, then click the button to start the interview, or click on any question to jump directly to it." 
+         : "لقد قمنا بتوليد الأسئلة التالية بناءً على سيرتك الذاتية. يمكنك مراجعتها بالأسفل، ثم الضغط على الزر لبدء المقابلة، أو الضغط على أي سؤال للانتقال إليه مباشرة." }}
+    </p>
+    
+    <div class="questions-container">
+      @for (question of interviewService.questions(); track $index) {
+        <div class="question-item animate-fade-in" (click)="jumpToQuestion($index)">
+          <div class="question-num-badge">Q{{ $index + 1 }}</div>
+          <div class="question-text-content">{{ question }}</div>
+          <div class="question-hover-hint">
+            {{ lang.currentLang() === 'en' ? 'Start here ➜' : 'ابدأ هنا ➜' }}
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="actions-area">
+      <button class="btn btn-primary btn-large" (click)="startInterview()">
+        <span>{{ lang.currentLang() === 'en' ? 'Start Answering Questions' : 'البدء في الإجابة على الأسئلة' }}</span>
+      </button>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,175 @@
+<div class="candidates-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h2>{{ lang.text().CANDIDATES_TITLE }}</h2>
+      <p class="subtitle">{{ lang.text().CANDIDATES_SUBTITLE }}</p>
+    </div>
+    <span class="total-badge">{{ lang.currentLang() === 'en' ? 'Total' : 'الإجمالي' }}: {{ totalCandidates() }}</span>
+  </div>
+
+  <!-- Filters Toolbar -->
+  <div class="toolbar">
+    <div class="search-box">
+      <span class="icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </span>
+      <input 
+        type="text" 
+        [(ngModel)]="searchQuery" 
+        (ngModelChange)="onSearch()" 
+        [placeholder]="lang.text().SEARCH_PLACEHOLDER"
+      >
+    </div>
+
+    <div class="filter-box">
+      <label for="status-filter">{{ lang.text().STATUS_LABEL }}</label>
+      <select id="status-filter" [(ngModel)]="statusFilter" (change)="onFilterChange()">
+        <option value="">{{ lang.text().ALL_STATUSES }}</option>
+        <option value="pending">{{ lang.text().STATUS_PENDING }}</option>
+        <option value="in_progress">{{ lang.text().STATUS_ONGOING }}</option>
+        <option value="completed">{{ lang.text().STATUS_COMPLETED }}</option>
+        <option value="cancelled">{{ lang.text().STATUS_CANCELLED }}</option>
+        <option value="disqualified">{{ lang.text().STATUS_DISQUALIFIED }}</option>
+        <option value="duplicate">{{ lang.text().STATUS_DUPLICATE }}</option>
+      </select>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner-custom"></div>
+      <p>{{ lang.currentLang() === 'en' ? 'Loading candidates...' : 'جاري تحميل المتقدمين...' }}</p>
+    </div>
+  } @else if (errorMessage()) {
+    <div class="error-state">
+      <p class="error-msg">⚠️ {{ errorMessage() }}</p>
+      <button (click)="loadCandidates()" class="retry-btn">
+        {{ lang.currentLang() === 'en' ? 'Retry' : 'إعادة المحاولة' }}
+      </button>
+    </div>
+  } @else if (candidates().length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48" height="48">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+        </svg>
+      </div>
+      <p>{{ lang.text().NO_CANDIDATES }}</p>
+    </div>
+  } @else {
+    <!-- Table Layout -->
+    <div class="table-responsive">
+      <table class="candidates-table">
+        <thead>
+          <tr>
+            <th (click)="onSort('applicantName')" class="sortable">
+              {{ lang.text().TH_NAME }} 
+              <span class="sort-icon">{{ sortByField === 'applicantName' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕' }}</span>
+            </th>
+            <th>{{ lang.text().TH_EMAIL }}</th>
+            <th>{{ lang.text().TH_PHONE }}</th>
+            <th (click)="onSort('createdAt')" class="sortable">
+              {{ lang.text().TH_DATE }}
+              <span class="sort-icon">{{ sortByField === 'createdAt' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕' }}</span>
+            </th>
+            <th>{{ lang.text().TH_STATUS }}</th>
+            <th (click)="onSort('finalScore')" class="sortable">
+              {{ lang.text().TH_SCORE }}
+              <span class="sort-icon">{{ sortByField === 'finalScore' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕' }}</span>
+            </th>
+            <th (click)="onSort('violationCount')" class="sortable">
+              {{ lang.text().TH_VIOLATIONS }}
+              <span class="sort-icon">{{ sortByField === 'violationCount' ? (sortOrder === 'asc' ? '▲' : '▼') : '↕' }}</span>
+            </th>
+            <th>{{ lang.text().TH_ACTIONS }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of candidates(); track c._id) {
+            <tr [class.duplicate-row]="c.isDuplicate">
+              <td>
+                <div class="name-cell">
+                  <span class="name">{{ c.applicantName }}</span>
+                  @if (c.isDuplicate) {
+                    <span class="dup-label" title="Duplicate candidate found">
+                      {{ lang.currentLang() === 'en' ? 'Duplicate' : 'مكرر' }}
+                    </span>
+                  }
+                </div>
+              </td>
+              <td>{{ c.email || 'N/A' }}</td>
+              <td>{{ c.phone || 'N/A' }}</td>
+              <td>{{ c.createdAt | date:'shortDate' }}</td>
+              <td>
+                <span class="status-tag tag-{{ c.status }}">
+                  {{ c.status === 'in_progress' 
+                     ? (lang.currentLang() === 'en' ? 'Ongoing' : 'قيد المقابلة') 
+                     : c.status === 'pending'
+                     ? (lang.currentLang() === 'en' ? 'Pending' : 'قيد الانتظار')
+                     : c.status === 'completed'
+                     ? (lang.currentLang() === 'en' ? 'Completed' : 'مكتمل')
+                     : c.status === 'cancelled'
+                     ? (lang.currentLang() === 'en' ? 'Cancelled' : 'ملغي')
+                     : (lang.currentLang() === 'en' ? 'Disqualified' : 'مستبعد')
+                  }}
+                </span>
+              </td>
+              <td>
+                <span class="score-text" [class.unscored]="c.finalScore === null">
+                  {{ c.finalScore !== null 
+                     ? c.finalScore + '/' + c.maxPossibleScore 
+                     : (lang.currentLang() === 'en' ? 'Not Scored' : 'لم تقيم بعد') 
+                  }}
+                </span>
+              </td>
+              <td>
+                <span class="violation-count" [class.danger]="c.violationCount > 0">
+                  {{ c.violationCount }}
+                </span>
+              </td>
+              <td>
+                <div class="action-buttons">
+                  <a [routerLink]="['/admin/candidates', c._id]" class="btn-action btn-view" title="View Details">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    <span>{{ lang.text().BTN_DETAILS }}</span>
+                  </a>
+                  <button (click)="downloadCV(c._id, c.applicantName)" class="btn-action btn-cv" title="Download CV">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="7 10 12 15 17 10"></polyline>
+                      <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span>{{ lang.text().BTN_CV }}</span>
+                  </button>
+                  <button (click)="deleteCandidate(c._id, c.applicantName)" class="btn-action btn-delete" title="Delete Session">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                      <line x1="10" y1="11" x2="10" y2="17"></line>
+                      <line x1="14" y1="11" x2="14" y2="17"></line>
+                    </svg>
+                    <span>{{ lang.text().BTN_DELETE }}</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination">
+      <button (click)="prevPage()" [disabled]="currentPage === 1" class="btn-page">{{ lang.text().PREV_BTN }}</button>
+      <span class="page-info">{{ lang.text().PAGE }} {{ currentPage }} {{ lang.text().PAGE_OF }} {{ totalPages }}</span>
+      <button (click)="nextPage()" [disabled]="currentPage * pageSize >= totalCandidates()" class="btn-page">{{ lang.text().NEXT_BTN }}</button>
+    </div>
+  }
+</div>

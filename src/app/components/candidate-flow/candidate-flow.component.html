@@ -1,0 +1,63 @@
+<!-- Loading Spinner Overlay -->
+@if (interviewService.isLoading()) {
+  <div class="spinner animate-fade-in">
+    <div class="spinner-content">
+      <div class="spinner-ring"></div>
+      <p id="spinnerText">{{ interviewService.loadingMessage() || 'Loading...' }}</p>
+    </div>
+  </div>
+}
+
+<!-- Toast Alerts Container -->
+<div class="alert-container">
+  @if (interviewService.errorMessage()) {
+    <div class="alert alert-error">
+      <p>{{ interviewService.errorMessage() }}</p>
+      <button class="alert-close" (click)="interviewService.errorMessage.set('')">×</button>
+    </div>
+  }
+
+  @if (interviewService.successMessage()) {
+    <div class="alert alert-success">
+      <p>{{ interviewService.successMessage() }}</p>
+      <button class="alert-close" (click)="interviewService.successMessage.set('')">×</button>
+    </div>
+  }
+</div>
+
+<div class="container">
+  <!-- Language Switcher Float -->
+  <div class="lang-switch-wrapper">
+    <button (click)="lang.toggleLanguage()" class="lang-toggle-btn">
+      <span>🌐</span>
+      <span>{{ lang.currentLang() === 'en' ? 'العربية' : 'English' }}</span>
+    </button>
+  </div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="logo-container">
+      <img src="logoV1.svg" alt="AI Interview System Logo" class="app-logo">
+    </div>
+    <h1>{{ lang.text().APP_TITLE }}</h1>
+    <p class="subtitle">{{ lang.text().APP_SUBTITLE }}</p>
+  </header>
+
+  <!-- Main Content Step Router -->
+  <main class="main-content">
+    @switch (interviewService.currentStep()) {
+      @case (1) {
+        <app-cv-upload />
+      }
+      @case (2) {
+        <app-questions-list />
+      }
+      @case (3) {
+        <app-interview-session />
+      }
+      @case (4) {
+        <app-completion />
+      }
+    }
+  </main>
+</div>

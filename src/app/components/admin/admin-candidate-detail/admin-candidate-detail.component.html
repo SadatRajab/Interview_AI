@@ -1,0 +1,232 @@
+<div class="detail-container">
+  <!-- Back Button & Actions -->
+  <div class="top-nav">
+    <a routerLink="/admin/candidates" class="btn-back">{{ lang.text().BACK_LIST }}</a>
+    <div class="top-actions" *ngIf="candidate()">
+      <button (click)="downloadCV()" class="btn-action-detail btn-dl">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        <span>{{ lang.text().DOWNLOAD_CV }}</span>
+      </button>
+      <button (click)="deleteCandidate()" class="btn-action-detail btn-del">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          <line x1="10" y1="11" x2="10" y2="17"></line>
+          <line x1="14" y1="11" x2="14" y2="17"></line>
+        </svg>
+        <span>{{ lang.text().DELETE_INTERVIEW }}</span>
+      </button>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner-custom"></div>
+      <p>{{ lang.currentLang() === 'en' ? 'Loading candidate details...' : 'جاري تحميل تفاصيل المتقدم...' }}</p>
+    </div>
+  } @else if (errorMessage()) {
+    <div class="error-state">
+      <p class="error-msg">⚠️ {{ errorMessage() }}</p>
+      <button (click)="loadCandidateDetail()" class="retry-btn">
+        {{ lang.currentLang() === 'en' ? 'Retry' : 'إعادة المحاولة' }}
+      </button>
+    </div>
+  } @else if (candidate()) {
+    <!-- Main Info Grid -->
+    <div class="header-card">
+      <div class="header-main">
+        <div class="avatar-large">{{ candidate()?.applicantName?.slice(0,2) || 'AP' }}</div>
+        <div class="info">
+          <div class="name-row">
+            <h2>{{ candidate()?.applicantName }}</h2>
+            @if (candidate()?.isDuplicate) {
+              <span class="dup-badge">{{ lang.currentLang() === 'en' ? 'Duplicate' : 'مكرر' }}</span>
+            }
+          </div>
+          <p class="email">📧 {{ candidate()?.email || 'N/A' }} | 📱 {{ candidate()?.phone || 'N/A' }}</p>
+          <p class="meta">{{ lang.text().REGISTERED_ON }} {{ candidate()?.createdAt | date:'medium' }}</p>
+        </div>
+      </div>
+
+      <!-- Status dropdown toggle -->
+      <div class="status-selector">
+        <label for="status-select">{{ lang.text().STATUS_CONTROL }}</label>
+        <select id="status-select" [ngModel]="candidate()?.status" (ngModelChange)="changeStatus($event)">
+          <option value="pending">{{ lang.text().STATUS_PENDING }}</option>
+          <option value="in_progress">{{ lang.text().STATUS_ONGOING }}</option>
+          <option value="completed">{{ lang.text().STATUS_COMPLETED }}</option>
+          <option value="cancelled">{{ lang.text().STATUS_CANCELLED }}</option>
+          <option value="disqualified">{{ lang.text().STATUS_DISQUALIFIED }}</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Scores & Violations Overview -->
+    <div class="overview-grid">
+      <!-- Scoring Card -->
+      <div class="overview-card score-overview">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+            <circle cx="12" cy="12" r="10"></circle>
+            <circle cx="12" cy="12" r="6"></circle>
+            <circle cx="12" cy="12" r="2"></circle>
+          </svg>
+        </div>
+        <div class="card-content">
+          <h4>{{ lang.text().INTERVIEW_SCORE }}</h4>
+          @if (candidate()?.finalScore !== null) {
+            <p class="value score-val">{{ candidate()?.finalScore }}<span>/{{ candidate()?.maxPossibleScore }}</span></p>
+            <p class="subtext">{{ lang.text().RAW_SCORE }} {{ candidate()?.currentScore }} / {{ candidate()?.maxPossibleScore }}</p>
+            <p class="subtext text-deduct">{{ lang.text().DEDUCTIONS }} -{{ (candidate()?.currentScore || 0) - (candidate()?.finalScore || 0) }}</p>
+          } @else {
+            <p class="value unscored-val">{{ lang.text().NOT_EVALUATED }}</p>
+            <p class="subtext">{{ lang.text().NOT_FINALIZED }}</p>
+          }
+        </div>
+      </div>
+
+      <!-- Violations Card -->
+      <div class="overview-card violations-overview" [class.danger]="(candidate()?.violationCount || 0) > 0">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+            <path d="M10.29 3.86l-8.07 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.78-3.14l-8.07-14a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </div>
+        <div class="card-content">
+          <h4>{{ lang.text().STAT_VIOLATIONS }}</h4>
+          <p class="value">{{ candidate()?.violationCount }}</p>
+          <p class="subtext">{{ lang.text().LIMIT_WARNINGS }}</p>
+          @if (candidate()?.status === 'disqualified') {
+            <p class="subtext text-danger font-bold">{{ lang.text().DISQ_EXCEED }}</p>
+          }
+        </div>
+      </div>
+
+      <!-- Timing Card -->
+      <div class="overview-card timing-overview">
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+        </div>
+        <div class="card-content">
+          <h4>{{ lang.text().INTERVIEW_TIMING }}</h4>
+          <p class="value duration">{{ getInterviewDuration() }}</p>
+          <p class="subtext">{{ lang.text().START_TIME }} {{ (candidate()?.startedAt | date:'shortTime') || 'N/A' }}</p>
+          <p class="subtext">{{ lang.text().END_TIME }} {{ (candidate()?.completedAt | date:'shortTime') || 'N/A' }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs navigation -->
+    <div class="details-tab-bar">
+      <button class="tab-btn" [class.active]="activeTab === 'answers'" (click)="activeTab = 'answers'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="vertical-align: middle; margin-right: 4px;">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <span>{{ lang.text().TAB_QA }} ({{ candidate()?.answers?.length || 0 }})</span>
+      </button>
+      <button class="tab-btn" [class.active]="activeTab === 'violations'" (click)="activeTab = 'violations'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="vertical-align: middle; margin-right: 4px;">
+          <path d="M10.29 3.86l-8.07 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.78-3.14l-8.07-14a2 2 0 0 0-3.42 0z"></path>
+          <line x1="12" y1="9" x2="12" y2="13"></line>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        <span>{{ lang.text().TAB_VIOLATIONS }} ({{ candidate()?.violations?.length || 0 }})</span>
+      </button>
+      <button class="tab-btn" [class.active]="activeTab === 'cv'" (click)="activeTab = 'cv'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="vertical-align: middle; margin-right: 4px;">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+        <span>{{ lang.text().TAB_CV }}</span>
+      </button>
+    </div>
+
+    <!-- Tab Contents Workspace -->
+    <div class="tab-content">
+      <!-- Answers list -->
+      @if (activeTab === 'answers') {
+        <div class="answers-tab">
+          @if (!candidate()?.answers || candidate()?.answers?.length === 0) {
+            <p class="no-data-msg">{{ lang.text().NO_ANSWERS }}</p>
+          } @else {
+            <div class="answers-list">
+              @for (ans of candidate()?.answers; track ans.questionIndex) {
+                <div class="qa-card">
+                  <div class="qa-header">
+                    <span class="qa-index">{{ lang.text().QUESTION_TITLE }} {{ ans.questionIndex + 1 }}</span>
+                    <span class="qa-score">{{ lang.text().QA_SCORE }}: {{ ans.score }}/10</span>
+                  </div>
+                  <div class="qa-body">
+                    <p class="question"><strong>Q:</strong> {{ ans.questionText }}</p>
+                    <p class="answer"><strong>A:</strong> {{ ans.answerText || (lang.currentLang() === 'en' ? 'No answer submitted.' : 'لم يتم تقديم إجابة.') }}</p>
+                  </div>
+                  <div class="qa-evaluation">
+                    <h5>{{ lang.text().AI_FEEDBACK }}</h5>
+                    <p class="eval-text">{{ ans.evaluation }}</p>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Violations List -->
+      @if (activeTab === 'violations') {
+        <div class="violations-tab">
+          @if (!candidate()?.violations || candidate()?.violations?.length === 0) {
+            <p class="no-data-msg text-success">{{ lang.text().NO_VIOLATIONS }}</p>
+          } @else {
+            <div class="violations-list-items">
+              @for (v of candidate()?.violations; track v.timestamp; let idx = $index) {
+                <div class="violation-item">
+                  <div class="v-badge">{{ lang.text().VIOLATION }} {{ idx + 1 }}</div>
+                  <div class="v-details">
+                    <div class="v-header">
+                      <span class="v-type">{{ v.type | uppercase }}</span>
+                      <span class="v-time">{{ v.timestamp | date:'mediumTime' }}</span>
+                    </div>
+                    <p class="v-desc">{{ v.description }}</p>
+                    <span class="v-deduct">{{ lang.text().SCORE_DEDUCTED }} -{{ v.pointsDeducted }} {{ lang.currentLang() === 'en' ? 'points' : 'نقاط' }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <!-- CV extraction text -->
+      @if (activeTab === 'cv') {
+        <div class="cv-tab">
+          <div class="cv-header-row">
+            <h4>{{ lang.text().UPLOADED_DOC }} <strong>{{ candidate()?.cvOriginalName }}</strong></h4>
+            <button (click)="downloadCV()" class="btn-action-detail btn-dl">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="vertical-align: middle; margin-right: 4px;">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>{{ lang.text().DOWNLOAD_CV }}</span>
+            </button>
+          </div>
+          <div class="cv-text-box">
+            <pre>{{ candidate()?.cvText }}</pre>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

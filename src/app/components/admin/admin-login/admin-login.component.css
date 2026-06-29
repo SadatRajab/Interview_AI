@@ -1,0 +1,216 @@
+.login-wrapper {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  overflow: hidden;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  box-sizing: border-box;
+  padding: 20px;
+}
+
+/* Glowing background orbs matching interview page */
+.glow-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  z-index: 1;
+  opacity: 0.4;
+}
+
+.orb-1 {
+  top: -10%;
+  left: -10%;
+  width: 500px;
+  height: 500px;
+  background: rgba(11, 125, 136, 0.2);
+}
+
+.orb-2 {
+  bottom: -10%;
+  right: -10%;
+  width: 500px;
+  height: 500px;
+  background: rgba(20, 145, 155, 0.15);
+}
+
+/* Login Card - Light Glassmorphism */
+.login-card {
+  position: relative;
+  z-index: 5;
+  width: 100%;
+  max-width: 440px;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 20px;
+  padding: 40px;
+  box-sizing: border-box;
+  box-shadow: 0 10px 40px rgba(11, 125, 136, 0.08);
+  animation: cardFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.brand {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.brand-logo {
+  height: 50px;
+  margin-bottom: 16px;
+  filter: drop-shadow(0 4px 10px rgba(11, 125, 136, 0.15));
+}
+
+.brand h2 {
+  font-size: 22px;
+  font-weight: 800;
+  color: #055160; /* primary dark */
+  margin: 0 0 6px 0;
+}
+
+.brand-subtitle {
+  font-size: 13px;
+  color: #636e72;
+  margin: 0;
+}
+
+.error-banner {
+  background: rgba(214, 40, 40, 0.08);
+  border: 1px solid rgba(214, 40, 40, 0.15);
+  color: #d62828;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 20px;
+  text-align: center;
+  animation: shake 0.4s ease;
+}
+
+/* Forms - Light inputs */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #636e72;
+}
+
+.input-container {
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 0 14px;
+  transition: all 0.2s ease;
+}
+
+.input-container:focus-within {
+  border-color: #0b7d88;
+  box-shadow: 0 0 0 3px rgba(11, 125, 136, 0.15);
+}
+
+.input-container .icon {
+  margin-right: 10px;
+  opacity: 0.6;
+  font-size: 14px;
+}
+
+.input-container input {
+  background: none;
+  border: none;
+  width: 100%;
+  height: 44px;
+  color: #2d3436;
+  outline: none;
+  font-size: 14px;
+}
+
+.input-container input::placeholder {
+  color: #cbd5e1;
+}
+
+/* Submit Button - Teal Primary */
+.submit-btn {
+  width: 100%;
+  height: 46px;
+  background: #0b7d88;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(11, 125, 136, 0.25);
+  margin-top: 10px;
+}
+
+.submit-btn:hover:not(:disabled) {
+  background: #14919b;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(11, 125, 136, 0.35);
+}
+
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.spinner-inline {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  border-top-color: #ffffff;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes cardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* RTL translation layout compatibility */
+body.rtl .input-container {
+  direction: rtl;
+}
+body.rtl .input-container .icon {
+  margin-right: 0;
+  margin-left: 10px;
+}

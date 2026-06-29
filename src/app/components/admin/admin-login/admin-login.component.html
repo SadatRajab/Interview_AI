@@ -1,0 +1,84 @@
+<div class="login-wrapper">
+  <!-- Language Switcher Float -->
+  <div class="lang-switch-wrapper">
+    <button (click)="lang.toggleLanguage()" class="lang-toggle-btn">
+      <svg class="btn-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="2" y1="12" x2="22" y2="12"></line>
+        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+      </svg>
+      <span>{{ lang.currentLang() === 'en' ? 'العربية' : 'English' }}</span>
+    </button>
+  </div>
+
+  <!-- Glowing background elements -->
+  <div class="glow-orb orb-1"></div>
+  <div class="glow-orb orb-2"></div>
+
+  <div class="login-card">
+    <div class="brand">
+      <img src="logoV1.svg" alt="App Logo" class="brand-logo">
+      <h2>{{ lang.text().ADMIN_LOGIN_TITLE }}</h2>
+      <p class="brand-subtitle">{{ lang.text().ADMIN_LOGIN_SUBTITLE }}</p>
+    </div>
+
+    @if (errorMessage()) {
+      <div class="error-banner">
+        <span>{{ errorMessage() }}</span>
+      </div>
+    }
+
+    <form (submit)="onLogin($event)" class="login-form">
+      <div class="form-group">
+        <label for="username">{{ lang.text().USERNAME }}</label>
+        <div class="input-container">
+          <span class="icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </span>
+          <input 
+            type="text" 
+            id="username" 
+            name="username" 
+            [(ngModel)]="username" 
+            [placeholder]="lang.text().USERNAME"
+            required
+            autocomplete="username"
+          >
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">{{ lang.text().PASSWORD }}</label>
+        <div class="input-container">
+          <span class="icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+          </span>
+          <input 
+            type="password" 
+            id="password" 
+            name="password" 
+            [(ngModel)]="password" 
+            [placeholder]="lang.text().PASSWORD"
+            required
+            autocomplete="current-password"
+          >
+        </div>
+      </div>
+
+      <button type="submit" class="submit-btn" [disabled]="isLoading()">
+        @if (isLoading()) {
+          <span class="spinner-inline"></span>
+          <span>{{ lang.text().SIGNING_IN }}</span>
+        } @else {
+          <span>{{ lang.text().SIGN_IN }}</span>
+        }
+      </button>
+    </form>
+  </div>
+</div>

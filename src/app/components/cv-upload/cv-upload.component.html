@@ -1,0 +1,77 @@
+<section class="card active-section">
+  <div class="card-header">
+    <h2>{{ lang.currentLang() === 'en' ? 'Step 1: Upload Your CV' : 'الخطوة 1: ارفع سيرتك الذاتية' }}</h2>
+    <p class="step-number">{{ lang.currentLang() === 'en' ? '1 of 3' : '1 من 3' }}</p>
+  </div>
+  
+  <div class="card-body">
+    <div 
+      class="upload-area" 
+      [class.drag-over]="isDragOver()"
+      (click)="triggerFileInput()"
+      (dragover)="onDragOver($event)"
+      (dragleave)="onDragLeave()"
+      (drop)="onDrop($event)"
+    >
+      <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+        <polyline points="17 8 12 3 7 8"></polyline>
+        <line x1="12" y1="3" x2="12" y2="15"></line>
+      </svg>
+      <p class="upload-text">{{ lang.text().DRAG_DROP_CV }}</p>
+      <p class="upload-hint">{{ lang.text().SUPPORTED_FORMATS }}</p>
+      <input 
+        #fileInput
+        type="file" 
+        class="hidden-input"
+        accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg"
+        (change)="onFileSelected($event)"
+      >
+    </div>
+
+    @if (selectedFile()) {
+      <p class="file-name">{{ lang.text().SELECT_FILE }} {{ selectedFile()?.name }}</p>
+    }
+
+    <button 
+      class="btn btn-primary" 
+      [disabled]="!selectedFile() || interviewService.isLoading()"
+      (click)="extractText()"
+    >
+      <span>{{ lang.text().EXTRACT_CV_TEXT }}</span>
+      @if (interviewService.isLoading() && interviewService.loadingMessage() === 'Extracting CV text...') {
+        <span class="loading-dots">⏳</span>
+      }
+    </button>
+
+    @if (extractedText()) {
+      <div class="extracted-cv animate-fade-in">
+        <h3>{{ lang.text().EDIT_CV_TEXT }}</h3>
+        <textarea 
+          class="cv-text-area"
+          [(ngModel)]="extractedText"
+          placeholder="CV text content..."
+        ></textarea>
+        
+        <button 
+          class="btn btn-success btn-start-interview"
+          [disabled]="!extractedText().trim() || interviewService.isLoading()"
+          (click)="onStartInterviewClick()"
+        >
+          <span>{{ lang.text().START_INTERVIEW }}</span>
+          @if (interviewService.isLoading() && interviewService.loadingMessage() === 'Generating interview questions...') {
+            <span class="loading-dots">⏳</span>
+          }
+        </button>
+      </div>
+    }
+  </div>
+</section>
+
+<!-- Instructions Modal -->
+@if (interviewService.showInstructionsModal()) {
+  <app-instructions-modal
+    (confirmed)="onInstructionsConfirmed()"
+    (cancelled)="onInstructionsCancelled()"
+  />
+}

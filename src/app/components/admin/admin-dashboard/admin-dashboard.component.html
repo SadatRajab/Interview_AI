@@ -1,0 +1,96 @@
+<div class="admin-layout">
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="logoV1.svg" alt="App Logo" class="logo">
+      <div>
+        <h3>{{ lang.currentLang() === 'en' ? 'AI Interview' : 'المقابلات الشخصية' }}</h3>
+        <span>{{ lang.text().ADMIN_PANEL }}</span>
+      </div>
+    </div>
+
+    <!-- Language Selector inside Sidebar -->
+    <div class="sidebar-lang-switch">
+      <button (click)="lang.toggleLanguage()" class="lang-toggle-btn">
+        <svg class="btn-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="2" y1="12" x2="22" y2="12"></line>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+        </svg>
+        <span>{{ lang.currentLang() === 'en' ? 'العربية' : 'English' }}</span>
+      </button>
+    </div>
+
+    <nav class="sidebar-menu">
+      <a routerLink="stats" routerLinkActive="active" class="menu-item">
+        <svg class="menu-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+          <line x1="18" y1="20" x2="18" y2="10"></line>
+          <line x1="12" y1="20" x2="12" y2="4"></line>
+          <line x1="6" y1="20" x2="6" y2="14"></line>
+        </svg>
+        <span>{{ lang.text().MENU_STATS }}</span>
+      </a>
+      <a routerLink="candidates" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="menu-item">
+        <svg class="menu-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+        <span>{{ lang.text().MENU_CANDIDATES }}</span>
+      </a>
+      <a routerLink="candidates" [queryParams]="{ status: 'duplicate' }" routerLinkActive="active" class="menu-item duplicate-link">
+        <svg class="menu-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+          <path d="M10.29 3.86l-8.07 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.78-3.14l-8.07-14a2 2 0 0 0-3.42 0z"></path>
+          <line x1="12" y1="9" x2="12" y2="13"></line>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        <span>{{ lang.text().MENU_DUPLICATES }}</span>
+        @if (duplicateCount() > 0) {
+          <span class="badge badge-warn">{{ duplicateCount() }}</span>
+        }
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="admin-profile">
+        <div class="avatar">AD</div>
+        <div class="info">
+          <h4>{{ adminName }}</h4>
+          <span>{{ lang.currentLang() === 'en' ? 'System Manager' : 'مدير النظام' }}</span>
+        </div>
+      </div>
+      <button (click)="logout()" class="logout-btn" title="Sign Out">
+        <svg class="logout-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+        <span>{{ lang.text().LOGOUT }}</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Panel -->
+  <div class="main-panel">
+    <!-- Duplicate alert warning banner -->
+    @if (showDuplicateAlert()) {
+      <div class="duplicate-alert-banner">
+        <div class="alert-content" (click)="navigateToDuplicates()">
+          <svg class="alert-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+            <path d="M10.29 3.86l-8.07 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.78-3.14l-8.07-14a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          <span><strong>{{ lang.text().NOTICE }}:</strong> {{ duplicateCount() }} {{ lang.text().DUPLICATE_BANNER_ALERT }}</span>
+        </div>
+        <button class="alert-dismiss" (click)="dismissAlert()" title="Close Alert">×</button>
+      </div>
+    }
+
+    <!-- Content Workspace -->
+    <main class="content-workspace">
+      <router-outlet (activate)="checkDuplicates()"></router-outlet>
+    </main>
+  </div>
+</div>

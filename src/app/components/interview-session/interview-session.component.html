@@ -1,0 +1,155 @@
+<section class="card active-section">
+  <div class="card-header">
+    <h2>{{ lang.currentLang() === 'en' ? 'Step 3: Answer Questions' : 'الخطوة 3: الإجابة على الأسئلة' }}</h2>
+    <div class="header-right">
+      <!-- Violation Counter Badge -->
+      @if (proctorService.violationCount() > 0) {
+        <div class="violation-badge" title="Violations recorded">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+            <path d="M12 9v2m0 4h.01M10.29 3.86l-8.07 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.78-3.14l-8.07-14a2 2 0 0 0-3.42 0z"/>
+          </svg>
+          <span>{{ proctorService.violationCount() }}/{{ proctorService.maxViolations() }}</span>
+        </div>
+      }
+      <p class="step-number">{{ lang.currentLang() === 'en' ? '3 of 3' : '3 من 3' }}</p>
+    </div>
+  </div>
+  
+  <div class="card-body">
+    <div class="progress-bar">
+      <div 
+        class="progress-fill" 
+        [style.width.%]="interviewService.progressPercentage()"
+      ></div>
+    </div>
+    <p class="progress-text">
+      {{ lang.text().QUESTION_TITLE }} {{ interviewService.currentQuestionIndex() + 1 }} {{ lang.text().OF }} {{ interviewService.questions().length }}
+    </p>
+
+    <div id="questionContent" class="animate-fade-in">
+      <h3 class="question-text">
+        {{ interviewService.currentQuestion() }}
+      </h3>
+      
+      <textarea 
+        class="answer-input"
+        [ngModel]="interviewService.currentAnswer()"
+        (ngModelChange)="onAnswerChange($event)"
+        [placeholder]="lang.text().ANSWER_PLACEHOLDER"
+        [disabled]="proctorService.isPaused() || proctorService.isDisqualified()"
+      ></textarea>
+      
+      <div class="char-counter">
+        <span>{{ interviewService.currentAnswer().length }}</span> / <span>{{ charLimit }}</span> {{ lang.currentLang() === 'en' ? 'characters' : 'حرف' }}
+      </div>
+      
+      <!-- Submit Answer Button (no evaluation shown) -->
+      @if (!interviewService.isCurrentAnswerSubmitted()) {
+        <button 
+          class="btn btn-primary" 
+          [disabled]="!interviewService.currentAnswer().trim() || interviewService.isLoading() || proctorService.isPaused() || proctorService.isDisqualified()"
+          (click)="submitAnswer()"
+        >
+          <span>{{ lang.text().SUBMIT_ANSWER }}</span>
+          @if (interviewService.isLoading() && interviewService.loadingMessage() === 'Submitting your answer...') {
+            <span class="loading-dots">⏳</span>
+          }
+        </button>
+      }
+
+      <!-- After submission: show next/finish buttons -->
+      @if (interviewService.isCurrentAnswerSubmitted()) {
+        <div class="submitted-notice animate-fade-in">
+          <p class="submitted-text">✓ {{ lang.text().SUBMITTED_SUCCESS }}</p>
+          <div class="submitted-actions">
+            @if (!interviewService.isLastQuestion()) {
+              <button class="btn btn-primary" (click)="next()">
+                {{ lang.currentLang() === 'en' ? 'Next Question' : 'السؤال التالي' }}
+              </button>
+            } @else {
+              <button class="btn btn-primary" (click)="finish()">
+                {{ lang.text().FINISH_INTERVIEW }}
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="navigation">
+      <button 
+        class="btn btn-secondary" 
+        [disabled]="interviewService.isFirstQuestion()"
+        (click)="prev()"
+      >
+        {{ lang.text().PREVIOUS }}
+      </button>
+      
+      @if (!interviewService.isLastQuestion()) {
+        <button class="btn btn-secondary" (click)="skip()">
+          {{ lang.currentLang() === 'en' ? 'Skip' : 'تخطي' }}
+        </button>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- Violation Warning Overlay -->
+@if (proctorService.showWarning() && !proctorService.isPaused() && !proctorService.isDisqualified()) {
+  <div class="warning-toast animate-fade-in">
+    <div class="warning-toast-content">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+        <path d="M12 9v2m0 4h.01M10.29 3.86l-8.07 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.78-3.14l-8.07-14a2 2 0 0 0-3.42 0z"/>
+      </svg>
+      <span>{{ lang.text().PROCTOR_WARN }}: {{ lang.text().PROCTOR_WARN_MSG }}</span>
+    </div>
+  </div>
+}
+
+<!-- Fullscreen Pause Overlay -->
+@if (proctorService.isPaused() && !proctorService.isDisqualified()) {
+  <div class="proctoring-overlay">
+    <div class="proctoring-modal animate-fade-in">
+      <div class="proctoring-icon warning-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 9v2m0 4h.01M10.29 3.86l-8.07 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.78-3.14l-8.07-14a2 2 0 0 0-3.42 0z"/>
+        </svg>
+      </div>
+      <h2>{{ lang.currentLang() === 'en' ? 'Interview Paused' : 'تم إيقاف المقابلة مؤقتاً' }}</h2>
+      <p>
+        {{ lang.currentLang() === 'en' 
+           ? 'You have exited fullscreen mode. This has been recorded as a violation.' 
+           : 'لقد خرجت من وضع ملء الشاشة. تم تسجيل هذا التجاوز كمخالفة.' }}
+      </p>
+      <p class="violation-count-text">
+        {{ lang.currentLang() === 'en' ? 'Violations:' : 'المخالفات:' }} 
+        <strong>{{ proctorService.violationCount() }}</strong> / {{ proctorService.maxViolations() }}
+      </p>
+      <p>
+        {{ lang.currentLang() === 'en' 
+           ? 'Please return to fullscreen mode to continue the interview.' 
+           : 'يرجى العودة إلى وضع ملء الشاشة لمتابعة المقابلة.' }}
+      </p>
+      <button class="btn btn-primary" (click)="resumeFromPause()">
+        {{ lang.currentLang() === 'en' ? 'Return to Fullscreen & Continue' : 'العودة لملء الشاشة والمتابعة' }}
+      </button>
+    </div>
+  </div>
+}
+
+<!-- Disqualification Overlay -->
+@if (proctorService.isDisqualified()) {
+  <div class="proctoring-overlay">
+    <div class="proctoring-modal disqualified-modal animate-fade-in">
+      <div class="proctoring-icon error-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="15" y1="9" x2="9" y2="15"/>
+          <line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+      </div>
+      <h2>{{ lang.currentLang() === 'en' ? 'Interview Cancelled' : 'تم إلغاء المقابلة' }}</h2>
+      <p>{{ lang.text().PROCTOR_WARNING_DISQ }}</p>
+    </div>
+  </div>
+}
