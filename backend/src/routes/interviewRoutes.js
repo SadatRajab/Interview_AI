@@ -14,6 +14,7 @@ const config = require('../config/config');
 const validateInterview = require('../middleware/validateInterview');
 const { uploadLimiter } = require('../middleware/rateLimiter');
 const interviewController = require('../controllers/interviewController');
+const scheduleMiddleware = require('../middleware/scheduleMiddleware');
 
 // ------------------------------------------
 // Multer Configuration for CV uploads
@@ -48,11 +49,14 @@ const upload = multer({
 // Routes
 // ------------------------------------------
 
+// Check interview availability (public)
+router.get('/availability', interviewController.getInterviewAvailability);
+
 // Upload CV file and extract text
-router.post('/upload-cv', uploadLimiter, upload.single('file'), interviewController.uploadCV);
+router.post('/upload-cv', scheduleMiddleware, uploadLimiter, upload.single('file'), interviewController.uploadCV);
 
 // Start interview (generate questions)
-router.post('/start', interviewController.startInterview);
+router.post('/start', scheduleMiddleware, interviewController.startInterview);
 
 // Submit answer for a question (requires active interview)
 router.post('/:id/answer', validateInterview, interviewController.submitAnswer);

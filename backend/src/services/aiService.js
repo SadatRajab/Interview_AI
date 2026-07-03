@@ -58,11 +58,14 @@ async function extractCV(filePath, originalName) {
  * @param {string} cvText - Extracted CV text
  * @returns {Promise<string[]>} Array of question strings
  */
-async function generateQuestions(cvText) {
+async function generateQuestions(cvText, lang) {
   logger.info(`Generating interview questions via AI API...`);
   
   const formData = new FormData();
   formData.append('cv_text', cvText);
+  if (lang) {
+    formData.append('lang', lang);
+  }
 
   const response = await fetch(`${AI_BASE}/generate-questions`, {
     method: 'POST',
@@ -89,12 +92,15 @@ async function generateQuestions(cvText) {
  * @param {string} answer - The applicant's answer
  * @returns {Promise<string>} Evaluation text
  */
-async function evaluateAnswer(question, answer) {
+async function evaluateAnswer(question, answer, lang) {
   logger.info(`Evaluating answer via AI API...`);
   
   const formData = new FormData();
   formData.append('question', question);
   formData.append('answer', answer);
+  if (lang) {
+    formData.append('lang', lang);
+  }
 
   const response = await fetch(`${AI_BASE}/evaluate`, {
     method: 'POST',

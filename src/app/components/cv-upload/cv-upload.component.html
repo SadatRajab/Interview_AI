@@ -4,10 +4,26 @@
     <p class="step-number">{{ lang.currentLang() === 'en' ? '1 of 3' : '1 من 3' }}</p>
   </div>
   
+  @if (!interviewService.isAvailable()) {
+    <div class="schedule-warning-banner animate-fade-in">
+      <span class="warning-icon">⚠️</span>
+      <span class="warning-text">
+        @if (interviewService.scheduleStatus() === 'not_started') {
+          {{ lang.text().NOT_STARTED_MSG }}
+        } @else if (interviewService.scheduleStatus() === 'ended') {
+          {{ lang.text().ENDED_MSG }}
+        } @else {
+          {{ lang.text().MANUALLY_CLOSED_MSG }}
+        }
+      </span>
+    </div>
+  }
+
   <div class="card-body">
     <div 
       class="upload-area" 
       [class.drag-over]="isDragOver()"
+      [class.disabled-area]="!interviewService.isAvailable()"
       (click)="triggerFileInput()"
       (dragover)="onDragOver($event)"
       (dragleave)="onDragLeave()"
@@ -35,7 +51,7 @@
 
     <button 
       class="btn btn-primary" 
-      [disabled]="!selectedFile() || interviewService.isLoading()"
+      [disabled]="!selectedFile() || interviewService.isLoading() || !interviewService.isAvailable()"
       (click)="extractText()"
     >
       <span>{{ lang.text().EXTRACT_CV_TEXT }}</span>
@@ -55,7 +71,7 @@
         
         <button 
           class="btn btn-success btn-start-interview"
-          [disabled]="!extractedText().trim() || interviewService.isLoading()"
+          [disabled]="!extractedText().trim() || interviewService.isLoading() || !interviewService.isAvailable()"
           (click)="onStartInterviewClick()"
         >
           <span>{{ lang.text().START_INTERVIEW }}</span>

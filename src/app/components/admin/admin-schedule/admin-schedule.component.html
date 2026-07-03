@@ -1,0 +1,373 @@
+<div class="schedule-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-icon-badge">
+        <svg class="header-badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+      </div>
+      <div>
+        <h2>{{ lang.text().SCHEDULE_TITLE }}</h2>
+        <p class="subtitle">{{ lang.text().SCHEDULE_SUBTITLE }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Messages Banners -->
+  @if (errorMessage()) {
+    <div class="alert-banner alert-error animate-fade-in">
+      <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <span>{{ errorMessage() }}</span>
+    </div>
+  }
+  @if (successMessage()) {
+    <div class="alert-banner alert-success animate-fade-in">
+      <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+      </svg>
+      <span>{{ successMessage() }}</span>
+    </div>
+  }
+
+  @if (isLoading()) {
+    <div class="loading-state animate-fade-in">
+      <div class="spinner-custom"></div>
+      <p>{{ lang.currentLang() === 'en' ? 'Updating settings...' : 'جاري تحديث الإعدادات...' }}</p>
+    </div>
+  } @else {
+    <div class="schedule-grid">
+      <!-- Section 1: Define Period -->
+      <div class="settings-card shadow-premium animate-fade-in">
+        <div class="card-header-premium">
+          <svg class="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          <h3>{{ lang.currentLang() === 'en' ? 'Interview Duration' : 'فترة المقابلات' }}</h3>
+        </div>
+        
+        <div class="card-body-premium">
+          <!-- Start Date/Time Group -->
+          <div class="schedule-period-group">
+            <div class="group-header">
+              <svg class="group-icon start-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <h4>{{ lang.currentLang() === 'en' ? 'Interview Start' : 'بدء المقابلات' }}</h4>
+            </div>
+            
+            <div class="inputs-row">
+              <!-- Start Date -->
+              <div class="input-wrapper">
+                <label class="input-sublabel">{{ lang.currentLang() === 'en' ? 'Date' : 'التاريخ' }}</label>
+                <div class="datetime-input-container">
+                  <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg>
+                  <input 
+                    type="text" 
+                    class="form-control cursor-pointer"
+                    readonly
+                    [value]="formatDateDisplay(startDate())"
+                    [placeholder]="lang.currentLang() === 'en' ? 'Select Date' : 'اختر التاريخ'"
+                    (click)="toggleStartCalendar()"
+                  >
+                  <div class="input-indicator-btn date-indicator" (click)="toggleStartCalendar()"></div>
+
+                  <!-- Date Picker Popover Overlay -->
+                  <div class="custom-picker-popup date-popup animate-fade-in" *ngIf="showStartCalendar">
+                    <div class="picker-header">
+                      <button type="button" (click)="prevStartMonth($event)" class="btn-nav-arrow">&lt;</button>
+                      <span class="picker-month-year">{{ getMonthYearLabel(startCalendarMonth) }}</span>
+                      <button type="button" (click)="nextStartMonth($event)" class="btn-nav-arrow">&gt;</button>
+                    </div>
+                    <div class="picker-weekdays">
+                      <span *ngFor="let name of getDayNames()">{{ name }}</span>
+                    </div>
+                    <div class="picker-days-grid">
+                      <button 
+                        type="button"
+                        *ngFor="let day of getStartCalendarDays()"
+                        [class.other-month]="!day.isCurrentMonth"
+                        [class.selected-day]="isStartDateSelected(day.dateStr)"
+                        (click)="selectStartDate(day.dateStr)"
+                        class="picker-day-btn"
+                      >
+                        {{ day.day }}
+                      </button>
+                    </div>
+                    <div class="picker-footer">
+                      <button type="button" (click)="clearStartDate($event)" class="btn-footer-clear">{{ lang.currentLang() === 'en' ? 'Clear' : 'مسح' }}</button>
+                      <button type="button" (click)="setStartDateToday($event)" class="btn-footer-today">{{ lang.currentLang() === 'en' ? 'Today' : 'اليوم' }}</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Start Time -->
+              <div class="input-wrapper">
+                <label class="input-sublabel">{{ lang.currentLang() === 'en' ? 'Time' : 'الوقت' }}</label>
+                <div class="datetime-input-container">
+                  <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                  <input 
+                    type="text" 
+                    class="form-control cursor-pointer"
+                    readonly
+                    [value]="formatTimeDisplay(startDate())"
+                    [placeholder]="lang.currentLang() === 'en' ? 'Select Time' : 'اختر الوقت'"
+                    (click)="toggleStartTimePicker()"
+                  >
+                  <div class="input-indicator-btn time-indicator" (click)="toggleStartTimePicker()"></div>
+
+                  <!-- Time Picker Popover Overlay -->
+                  <div class="custom-picker-popup time-popup animate-fade-in" *ngIf="showStartTimePicker">
+                    <div class="time-selectors">
+                      <!-- Hours -->
+                      <div class="time-select-column">
+                        <button type="button" (click)="incrementStartHour()" class="btn-time-arrow">▲</button>
+                        <div class="time-value-display">{{ getStartHourDisplay() }}</div>
+                        <button type="button" (click)="decrementStartHour()" class="btn-time-arrow">▼</button>
+                      </div>
+                      
+                      <div class="time-separator">:</div>
+                      
+                      <!-- Minutes -->
+                      <div class="time-select-column">
+                        <button type="button" (click)="incrementStartMinute()" class="btn-time-arrow">▲</button>
+                        <div class="time-value-display">{{ getStartMinuteDisplay() }}</div>
+                        <button type="button" (click)="decrementStartMinute()" class="btn-time-arrow">▼</button>
+                      </div>
+                      
+                      <!-- AM/PM Toggle Button -->
+                      <div class="time-select-column">
+                        <button type="button" (click)="incrementStartAmPm()" class="btn-time-arrow">▲</button>
+                        <button type="button" (click)="toggleStartAmPm()" class="time-ampm-btn">{{ getStartAmPmDisplay() }}</button>
+                        <button type="button" (click)="decrementStartAmPm()" class="btn-time-arrow">▼</button>
+                      </div>
+                    </div>
+                    
+                    <div class="picker-footer">
+                      <button type="button" (click)="clearStartTime($event)" class="btn-footer-clear">{{ lang.currentLang() === 'en' ? 'Clear' : 'مسح' }}</button>
+                      <button type="button" (click)="setStartTimeNow($event)" class="btn-footer-now">{{ lang.currentLang() === 'en' ? 'Now' : 'الآن' }}</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- End Date/Time Group -->
+          <div class="schedule-period-group end-period-group">
+            <div class="group-header">
+              <svg class="group-icon end-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <h4>{{ lang.currentLang() === 'en' ? 'Interview End' : 'انتهاء المقابلات' }}</h4>
+            </div>
+            
+            <div class="inputs-row">
+              <!-- End Date -->
+              <div class="input-wrapper">
+                <label class="input-sublabel">{{ lang.currentLang() === 'en' ? 'Date' : 'التاريخ' }}</label>
+                <div class="datetime-input-container">
+                  <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg>
+                  <input 
+                    type="text" 
+                    class="form-control cursor-pointer"
+                    readonly
+                    [value]="formatDateDisplay(endDate())"
+                    [placeholder]="lang.currentLang() === 'en' ? 'Select Date' : 'اختر التاريخ'"
+                    (click)="toggleEndCalendar()"
+                  >
+                  <div class="input-indicator-btn date-indicator" (click)="toggleEndCalendar()"></div>
+
+                  <!-- Date Picker Popover Overlay -->
+                  <div class="custom-picker-popup date-popup animate-fade-in" *ngIf="showEndCalendar">
+                    <div class="picker-header">
+                      <button type="button" (click)="prevEndMonth($event)" class="btn-nav-arrow">&lt;</button>
+                      <span class="picker-month-year">{{ getMonthYearLabel(endCalendarMonth) }}</span>
+                      <button type="button" (click)="nextEndMonth($event)" class="btn-nav-arrow">&gt;</button>
+                    </div>
+                    <div class="picker-weekdays">
+                      <span *ngFor="let name of getDayNames()">{{ name }}</span>
+                    </div>
+                    <div class="picker-days-grid">
+                      <button 
+                        type="button"
+                        *ngFor="let day of getEndCalendarDays()"
+                        [class.other-month]="!day.isCurrentMonth"
+                        [class.selected-day]="isEndDateSelected(day.dateStr)"
+                        (click)="selectEndDate(day.dateStr)"
+                        class="picker-day-btn"
+                      >
+                        {{ day.day }}
+                      </button>
+                    </div>
+                    <div class="picker-footer">
+                      <button type="button" (click)="clearEndDate($event)" class="btn-footer-clear">{{ lang.currentLang() === 'en' ? 'Clear' : 'مسح' }}</button>
+                      <button type="button" (click)="setEndDateToday($event)" class="btn-footer-today">{{ lang.currentLang() === 'en' ? 'Today' : 'اليوم' }}</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- End Time -->
+              <div class="input-wrapper">
+                <label class="input-sublabel">{{ lang.currentLang() === 'en' ? 'Time' : 'الوقت' }}</label>
+                <div class="datetime-input-container">
+                  <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                  <input 
+                    type="text" 
+                    class="form-control cursor-pointer"
+                    readonly
+                    [value]="formatTimeDisplay(endDate())"
+                    [placeholder]="lang.currentLang() === 'en' ? 'Select Time' : 'اختر الوقت'"
+                    (click)="toggleEndTimePicker()"
+                  >
+                  <div class="input-indicator-btn time-indicator" (click)="toggleEndTimePicker()"></div>
+
+                  <!-- Time Picker Popover Overlay -->
+                  <div class="custom-picker-popup time-popup animate-fade-in" *ngIf="showEndTimePicker">
+                    <div class="time-selectors">
+                      <!-- Hours -->
+                      <div class="time-select-column">
+                        <button type="button" (click)="incrementEndHour()" class="btn-time-arrow">▲</button>
+                        <div class="time-value-display">{{ getEndHourDisplay() }}</div>
+                        <button type="button" (click)="decrementEndHour()" class="btn-time-arrow">▼</button>
+                      </div>
+                      
+                      <div class="time-separator">:</div>
+                      
+                      <!-- Minutes -->
+                      <div class="time-select-column">
+                        <button type="button" (click)="incrementEndMinute()" class="btn-time-arrow">▲</button>
+                        <div class="time-value-display">{{ getEndMinuteDisplay() }}</div>
+                        <button type="button" (click)="decrementEndMinute()" class="btn-time-arrow">▼</button>
+                      </div>
+                      
+                      <!-- AM/PM Toggle Button -->
+                      <div class="time-select-column">
+                        <button type="button" (click)="incrementEndAmPm()" class="btn-time-arrow">▲</button>
+                        <button type="button" (click)="toggleEndAmPm()" class="time-ampm-btn">{{ getEndAmPmDisplay() }}</button>
+                        <button type="button" (click)="decrementEndAmPm()" class="btn-time-arrow">▼</button>
+                      </div>
+                    </div>
+                    
+                    <div class="picker-footer">
+                      <button type="button" (click)="clearEndTime($event)" class="btn-footer-clear">{{ lang.currentLang() === 'en' ? 'Clear' : 'مسح' }}</button>
+                      <button type="button" (click)="setEndTimeNow($event)" class="btn-footer-now">{{ lang.currentLang() === 'en' ? 'Now' : 'الآن' }}</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Save Button -->
+          <button 
+            (click)="saveSchedule()" 
+            class="btn-save-premium tooltip" 
+            [attr.data-tooltip]="lang.currentLang() === 'en' ? 'Commit scheduled date adjustments' : 'حفظ التعديلات المدخلة للمواعيد'"
+          >
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+              <polyline points="17 21 17 13 7 13 7 21"></polyline>
+              <polyline points="7 3 7 8 15 8"></polyline>
+            </svg>
+            <span>{{ lang.text().SAVE_SCHEDULE }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Section 2: Manual Control -->
+      <div class="settings-card shadow-premium animate-fade-in">
+        <div class="card-header-premium">
+          <svg class="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+            <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+            <line x1="12" y1="2" x2="12" y2="12"></line>
+          </svg>
+          <h3>{{ lang.text().MANUAL_CONTROL }}</h3>
+        </div>
+        
+        <div class="card-body-premium manual-control-body">
+          <p class="description">
+            {{ lang.currentLang() === 'en' 
+               ? 'Manually override schedule parameters to immediately activate or close application intake doors.' 
+               : 'تجاوز إعدادات المواعيد وجدولتها المحددة لفتح أو إغلاق إمكانية التقديم للمرشحين بشكل فوري.' }}
+          </p>
+
+          <div class="status-indicator-premium" [class.open]="isManualOpen()" [class.closed]="!isManualOpen()">
+            <div class="status-info">
+              @if (isManualOpen()) {
+                <span class="status-dot-icon open-dot">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                  </svg>
+                </span>
+                <div class="status-meta">
+                  <span class="status-label">{{ lang.currentLang() === 'en' ? 'Interviews Open' : 'المقابلات مفتوحة' }}</span>
+                  <span class="status-subtext">{{ lang.currentLang() === 'en' ? 'Accepting applications' : 'يتم استقبال المتقدمين حالياً' }}</span>
+                </div>
+              } @else {
+                <span class="status-dot-icon closed-dot">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                  </svg>
+                </span>
+                <div class="status-meta">
+                  <span class="status-label">{{ lang.currentLang() === 'en' ? 'Interviews Closed' : 'المقابلات مغلقة' }}</span>
+                  <span class="status-subtext">{{ lang.currentLang() === 'en' ? 'System intake blocked' : 'التقديم مغلق أمام الجميع يدوياً' }}</span>
+                </div>
+              }
+            </div>
+
+            <!-- Modern Toggle Switch -->
+            <label class="switch-control tooltip" [attr.data-tooltip]="isManualOpen() ? (lang.currentLang() === 'en' ? 'Click to close interviews manually' : 'انقر لإغلاق المقابلات يدوياً') : (lang.currentLang() === 'en' ? 'Click to open interviews manually' : 'انقر لفتح المقابلات يدوياً')">
+              <input 
+                type="checkbox" 
+                [checked]="isManualOpen()" 
+                (change)="onStatusToggleChange($event)"
+                class="switch-input"
+              >
+              <span class="switch-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

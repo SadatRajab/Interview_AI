@@ -9,6 +9,7 @@
  */
 
 const Applicant = require('../models/Applicant');
+const Schedule = require('../models/Schedule');
 const aiService = require('../services/aiService');
 const scoringService = require('../services/scoringService');
 const { validateStartInterview, validateSubmitAnswer } = require('../utils/validators');
@@ -82,8 +83,8 @@ const startInterview = async (req, res, next) => {
       });
     }
 
-    const { interviewId } = req.body;
-    logger.info(`Starting interview session: ${interviewId}`);
+    const { interviewId, lang } = req.body;
+    logger.info(`Starting interview session: ${interviewId} with language: ${lang || 'default'}`);
 
     const interview = await Applicant.findOne({ sessionToken: interviewId });
     if (!interview) {
@@ -108,7 +109,7 @@ const startInterview = async (req, res, next) => {
     }
 
     // Generate questions via AI API
-    const questions = await aiService.generateQuestions(interview.cvText);
+    const questions = await aiService.generateQuestions(interview.cvText, lang);
     if (!questions || questions.length === 0) {
       return res.status(500).json({
         success: false,
@@ -156,8 +157,8 @@ const submitAnswer = async (req, res, next) => {
       });
     }
 
-    const { questionIndex, answerText } = req.body;
-    logger.info(`Submitting answer for question index ${questionIndex} in session: ${interview._id}`);
+    const { questionIndex, answerText, lang } = req.body;
+    logger.info(`Submitting answer for question index ${questionIndex} in session: ${interview._id} with language: ${lang || 'default'}`);
 
     if (questionIndex < 0 || questionIndex >= interview.questions.length) {
       return res.status(400).json({
@@ -173,7 +174,7 @@ const submitAnswer = async (req, res, next) => {
     let score = config.defaultQuestionScore;
 
     try {
-      evaluation = await aiService.evaluateAnswer(questionText, answerText.trim());
+      evaluation = await aiService.evaluateAnswer(questionText, answerText.trim(), lang);
       score = scoringService.extractScoreFromEvaluation(evaluation);
     } catch (aiError) {
       logger.error('AI evaluation failed during submission, using default score', { error: aiError.message });
@@ -302,11 +303,59 @@ const getQuestions = async (req, res, next) => {
   }
 };
 
+/**
+ * GET /api/interview/availability
+ * Computes and returns whether the interview system is currently open.
+ * Uses server time to prevent client-side tampering.
+ */
+const getInterviewAvailability = async (req, res, next) => {
+  try {
+    const schedule = await Schedule.findOne().sort({ createdAt: -1 });
+    const now = new Date();
+
+    if (!schedule) {
+      return res.json({
+        success: true,
+        isAvailable: true,
+        status: 'open',
+        serverTime: now
+      });
+    }
+
+    let status = 'open';
+    let isAvailable = true;
+
+    if (!schedule.isManualOpen) {
+      status = 'closed';
+      isAvailable = false;
+    } else if (now < schedule.startDate) {
+      status = 'not_started';
+      isAvailable = false;
+    } else if (now > schedule.endDate) {
+      status = 'ended';
+      isAvailable = false;
+    }
+
+    res.json({
+      success: true,
+      isAvailable,
+      status,
+      startDate: schedule.startDate,
+      endDate: schedule.endDate,
+      isManualOpen: schedule.isManualOpen,
+      serverTime: now
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   uploadCV,
   startInterview,
   submitAnswer,
   finishInterview,
   getInterviewStatus,
-  getQuestions
+  getQuestions,
+  getInterviewAvailability
 };

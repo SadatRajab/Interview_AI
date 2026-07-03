@@ -32,6 +32,10 @@ export const routes: Routes = [
       {
         path: 'candidates/:id',
         loadComponent: () => import('./components/admin/admin-candidate-detail/admin-candidate-detail.component').then(m => m.AdminCandidateDetailComponent)
+      },
+      {
+        path: 'schedule',
+        loadComponent: () => import('./components/admin/admin-schedule/admin-schedule.component').then(m => m.AdminScheduleComponent)
       }
     ]
   },

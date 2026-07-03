@@ -42,7 +42,7 @@ module.exports = {
   // ------------------------------------------
   
   /** Directory for storing uploaded CV files */
-  uploadDir: path.join(__dirname, '../uploads'),
+  uploadDir: path.join(__dirname, '../../uploads'),
   
   /** Maximum file size in bytes (10 MB) */
   maxFileSize: 10 * 1024 * 1024,

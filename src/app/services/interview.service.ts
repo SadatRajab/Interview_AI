@@ -13,6 +13,7 @@
 
 import { Injectable, signal, computed } from '@angular/core';
 import { ApiService } from './api.service';
+import { LanguageService } from './language.service';
 import { firstValueFrom } from 'rxjs';
 
 @Injectable({
@@ -50,6 +51,12 @@ export class InterviewService {
   
   /** Whether to show the instructions modal */
   readonly showInstructionsModal = signal<boolean>(false);
+
+  // ---- Schedule / Availability State ----
+  readonly isAvailable = signal<boolean>(true);
+  readonly scheduleStatus = signal<string>('open');
+  readonly scheduleStart = signal<Date | null>(null);
+  readonly scheduleEnd = signal<Date | null>(null);
 
   // ---- UI State ----
   readonly isLoading = signal<boolean>(false);
@@ -91,7 +98,26 @@ export class InterviewService {
     return total > 0 && this.currentQuestionIndex() === total - 1;
   });
 
-  constructor(private apiService: ApiService) {}
+  constructor(
+    private apiService: ApiService,
+    private langService: LanguageService
+  ) {
+    this.checkAvailability();
+  }
+
+  async checkAvailability(): Promise<void> {
+    try {
+      const res = await firstValueFrom(this.apiService.getInterviewAvailability());
+      if (res.success) {
+        this.isAvailable.set(res.isAvailable);
+        this.scheduleStatus.set(res.status);
+        this.scheduleStart.set(res.startDate ? new Date(res.startDate) : null);
+        this.scheduleEnd.set(res.endDate ? new Date(res.endDate) : null);
+      }
+    } catch (err) {
+      console.error('Failed to fetch interview availability:', err);
+    }
+  }
 
   // ---- Alert Helpers ----
   showError(message: string) {
@@ -154,9 +180,11 @@ export class InterviewService {
     this.loadingMessage.set('Generating interview questions...');
     this.errorMessage.set('');
 
+    const lang = this.langService.currentLang();
+
     try {
       const response = await firstValueFrom(
-        this.apiService.startInterview(id, true)
+        this.apiService.startInterview(id, true, lang)
       );
 
       const questions = response.questions;
@@ -199,9 +227,11 @@ export class InterviewService {
     this.loadingMessage.set('Submitting your answer...');
     this.errorMessage.set('');
 
+    const lang = this.langService.currentLang();
+
     try {
       await firstValueFrom(
-        this.apiService.submitAnswer(this.interviewId(), idx, answer)
+        this.apiService.submitAnswer(this.interviewId(), idx, answer, lang)
       );
 
       // Mark this question as submitted

@@ -67,6 +67,7 @@ export interface ApplicantDetail {
     evaluation: string;
     score: number;
     answeredAt: string;
+    parsedEval?: any;
   }>;
   currentScore: number;
   finalScore: number;
@@ -179,6 +180,36 @@ export class AdminService {
 
   updateStatus(id: string, status: string): Observable<{ success: boolean; data: any }> {
     return this.http.put<{ success: boolean; data: any }>(`${this.API_BASE}/applicants/${id}/status`, { status }, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
+  getSchedule(): Observable<{ success: boolean; data: any }> {
+    return this.http.get<{ success: boolean; data: any }>(`${this.API_BASE}/schedule`, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
+  updateSchedule(startDate: string, endDate: string): Observable<{ success: boolean; data: any }> {
+    return this.http.post<{ success: boolean; data: any }>(`${this.API_BASE}/schedule`, { startDate, endDate }, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
+  toggleManualOpen(isManualOpen: boolean): Observable<{ success: boolean; data: any }> {
+    return this.http.post<{ success: boolean; data: any }>(`${this.API_BASE}/schedule/toggle`, { isManualOpen }, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
+  getDuplicates(): Observable<{ success: boolean; data: ApplicantSummary[] }> {
+    return this.http.get<{ success: boolean; data: ApplicantSummary[] }>(`${this.API_BASE}/duplicates`, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
+  deleteAllDuplicates(): Observable<{ success: boolean; message: string }> {
+    return this.http.delete<{ success: boolean; message: string }>(`${this.API_BASE}/duplicates`, {
       headers: this.getAuthHeaders()
     });
   }

@@ -32,4 +32,13 @@ router.put('/applicants/:id/status', authMiddleware, adminController.updateStatu
 // Delete an interview completely (requires admin auth)
 router.delete('/applicants/:id', authMiddleware, adminController.deleteApplicant);
 
+// Schedule configuration routes (requires admin auth)
+router.get('/schedule', authMiddleware, adminController.getSchedule);
+router.post('/schedule', authMiddleware, adminController.updateSchedule);
+router.post('/schedule/toggle', authMiddleware, adminController.toggleManualOpen);
+
+// Duplicate management routes (requires admin auth)
+router.get('/duplicates', authMiddleware, adminController.getDuplicateCandidates);
+router.delete('/duplicates', authMiddleware, adminController.deleteAllDuplicates);
+
 module.exports = router;

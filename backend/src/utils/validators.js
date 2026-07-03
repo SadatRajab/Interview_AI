@@ -24,7 +24,7 @@ const validateStartInterview = (body) => {
 
   if (!interviewId) {
     errors.push('interviewId is required');
-  } else if (!isValidObjectId(interviewId)) {
+  } else if (typeof interviewId !== 'string' || interviewId.length !== 32) {
     errors.push('interviewId is invalid');
   }
 

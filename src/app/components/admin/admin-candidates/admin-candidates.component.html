@@ -5,7 +5,18 @@
       <h2>{{ lang.text().CANDIDATES_TITLE }}</h2>
       <p class="subtitle">{{ lang.text().CANDIDATES_SUBTITLE }}</p>
     </div>
-    <span class="total-badge">{{ lang.currentLang() === 'en' ? 'Total' : 'الإجمالي' }}: {{ totalCandidates() }}</span>
+    <div class="page-header-actions">
+      @if (statusFilter === 'duplicate') {
+        <button (click)="deleteAllDuplicates()" class="btn-delete-bulk animate-fade-in" [disabled]="candidates().length === 0">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+          <span>{{ lang.text().DELETE_ALL_DUPLICATES }}</span>
+        </button>
+      }
+      <span class="total-badge">{{ lang.currentLang() === 'en' ? 'Total' : 'الإجمالي' }}: {{ totalCandidates() }}</span>
+    </div>
   </div>
 
   <!-- Filters Toolbar -->

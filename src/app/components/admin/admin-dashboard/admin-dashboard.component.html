@@ -39,6 +39,15 @@
         </svg>
         <span>{{ lang.text().MENU_CANDIDATES }}</span>
       </a>
+      <a routerLink="schedule" routerLinkActive="active" class="menu-item">
+        <svg class="menu-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+        <span>{{ lang.text().MENU_SCHEDULE }}</span>
+      </a>
       <a routerLink="candidates" [queryParams]="{ status: 'duplicate' }" routerLinkActive="active" class="menu-item duplicate-link">
         <svg class="menu-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
           <path d="M10.29 3.86l-8.07 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.78-3.14l-8.07-14a2 2 0 0 0-3.42 0z"></path>
@@ -74,17 +83,11 @@
   <!-- Main Panel -->
   <div class="main-panel">
     <!-- Duplicate alert warning banner -->
-    @if (showDuplicateAlert()) {
+    @if (duplicateCount() > 0) {
       <div class="duplicate-alert-banner">
         <div class="alert-content" (click)="navigateToDuplicates()">
-          <svg class="alert-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
-            <path d="M10.29 3.86l-8.07 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.78-3.14l-8.07-14a2 2 0 0 0-3.42 0z"></path>
-            <line x1="12" y1="9" x2="12" y2="13"></line>
-            <line x1="12" y1="17" x2="12.01" y2="17"></line>
-          </svg>
-          <span><strong>{{ lang.text().NOTICE }}:</strong> {{ duplicateCount() }} {{ lang.text().DUPLICATE_BANNER_ALERT }}</span>
+          <span>🔔 {{ lang.currentLang() === 'en' ? 'There are' : 'يوجد' }} <strong>{{ duplicateCount() }}</strong> {{ lang.currentLang() === 'en' ? 'duplicate candidates that need review.' : 'من المتقدمين المكررين الذين يحتاجون إلى مراجعة.' }}</span>
         </div>
-        <button class="alert-dismiss" (click)="dismissAlert()" title="Close Alert">×</button>
       </div>
     }
 

@@ -1,0 +1,51 @@
+/* Schedule warning banner styling */
+.schedule-warning-banner {
+  background: #fdf2f2;
+  border-left: 4px solid #f87171;
+  color: #9b1c1c;
+  padding: 16px 20px;
+  border-radius: 8px;
+  margin: 16px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 2px 10px rgba(248, 113, 113, 0.05);
+}
+
+body.rtl .schedule-warning-banner {
+  border-left: none;
+  border-right: 4px solid #f87171;
+}
+
+.warning-icon {
+  font-size: 18px;
+}
+
+/* Disabled upload area */
+.upload-area.disabled-area {
+  opacity: 0.55;
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.1) !important;
+  cursor: not-allowed !important;
+  pointer-events: none;
+}
+
+.upload-area.disabled-area .upload-icon {
+  color: #9ca3af;
+}
+
+.upload-area.disabled-area .upload-text,
+.upload-area.disabled-area .upload-hint {
+  color: #6b7280;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}

@@ -163,18 +163,197 @@
           } @else {
             <div class="answers-list">
               @for (ans of candidate()?.answers; track ans.questionIndex) {
-                <div class="qa-card">
-                  <div class="qa-header">
-                    <span class="qa-index">{{ lang.text().QUESTION_TITLE }} {{ ans.questionIndex + 1 }}</span>
-                    <span class="qa-score">{{ lang.text().QA_SCORE }}: {{ ans.score }}/10</span>
+                <div class="qa-card premium-qa-card">
+                  <!-- Header Row: Question Title, Category Pill & Laurel Score Card -->
+                  <div class="qa-header-premium-row">
+                    <div class="qa-header-left">
+                      <span class="qa-index">{{ lang.text().QUESTION_TITLE }} {{ ans.questionIndex + 1 }}</span>
+                      <span class="category-pill" [ngClass]="getCategoryClass(ans.questionIndex)">
+                        {{ getQuestionCategory(ans.questionIndex) }}
+                      </span>
+                    </div>
+                    
+                    <!-- Laurel Wreaths Woven Score Badge -->
+                    <div class="laurel-score-badge">
+                      <span class="laurel-score-label">{{ lang.currentLang() === 'en' ? 'Your Score' : 'درجتك' }}</span>
+                      <div class="laurel-score-num-row">
+                        <svg class="laurel-leaf left-leaf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M6 18c-1.5-1.5-2-4-2-6 0-3 2-6 6-8M4 10c0-1.5 1-3 3-4" />
+                          <path d="M3 14c1-1 2.5-1 3.5 0" />
+                          <path d="M4 10c1-1 2.5-1 3.5 0" />
+                          <path d="M4 6c1-1 2.5-1 3.5 0" />
+                        </svg>
+                        <span class="score-value-bold">{{ ans.score }}</span>
+                        <span class="score-max-small">/10</span>
+                        <svg class="laurel-leaf right-leaf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M18 18c1.5-1.5 2-4 2-6 0-3-2-6-6-8M20 10c0-1.5-1-3-3-4" />
+                          <path d="M21 14c-1-1-2.5-1-3.5 0" />
+                          <path d="M20 10c-1-1-2.5-1-3.5 0" />
+                          <path d="M20 6c-1-1-2.5-1-3.5 0" />
+                        </svg>
+                      </div>
+                      <span class="laurel-score-status">{{ ans.parsedEval?.scoreText }}</span>
+                    </div>
                   </div>
-                  <div class="qa-body">
-                    <p class="question"><strong>Q:</strong> {{ ans.questionText }}</p>
-                    <p class="answer"><strong>A:</strong> {{ ans.answerText || (lang.currentLang() === 'en' ? 'No answer submitted.' : 'لم يتم تقديم إجابة.') }}</p>
+
+                  <!-- Question Text Block -->
+                  <div class="qa-question-text">
+                    <strong>Q:</strong> {{ ans.questionText }}
                   </div>
-                  <div class="qa-evaluation">
-                    <h5>{{ lang.text().AI_FEEDBACK }}</h5>
-                    <p class="eval-text">{{ ans.evaluation }}</p>
+
+                  <!-- User Answer Box with Border-Left -->
+                  <div class="user-answer-box">
+                    <div class="answer-header">
+                      <svg class="icon-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                      </svg>
+                      <span>{{ lang.currentLang() === 'en' ? 'Your Answer:' : 'إجابتك:' }}</span>
+                    </div>
+                    <p class="answer-text">{{ ans.answerText || (lang.currentLang() === 'en' ? 'No answer submitted.' : 'لم يتم تقديم إجابة.') }}</p>
+                  </div>
+
+                  <!-- AI Feedback Grid -->
+                  <div class="ai-feedback-section">
+                    <h4 class="feedback-section-title">
+                      <svg class="icon-stars" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                      </svg>
+                      <span>{{ lang.text().AI_FEEDBACK }}</span>
+                    </h4>
+
+                    <div class="feedback-grid">
+                      <!-- Grid Card 1: Circle Score Chart -->
+                      <div class="feedback-metric-card ring-card">
+                        <div class="radial-progress-wrapper">
+                          <svg class="radial-ring" viewBox="0 0 36 36">
+                            <path class="ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" stroke-width="3"></path>
+                            <path class="ring-fg" [attr.stroke-dasharray]="(ans.score * 10) + ', 100'" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#2ecc71" stroke-width="3" stroke-linecap="round"></path>
+                          </svg>
+                          <div class="ring-text">
+                            <span class="score-number">{{ ans.score }}</span>
+                            <div class="ring-divider"></div>
+                            <span class="max-number">10</span>
+                          </div>
+                        </div>
+                        <h5 class="ring-status">{{ ans.parsedEval?.scoreText }}</h5>
+                        <p class="ring-description">{{ ans.parsedEval?.summary }}</p>
+                      </div>
+
+                      <!-- Grid Card 2: Strengths List -->
+                      <div class="feedback-metric-card strengths-card">
+                        <div class="metric-header text-success">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                          </svg>
+                          <span>{{ lang.currentLang() === 'en' ? 'Strengths' : 'نقاط القوة' }}</span>
+                        </div>
+                        <ul class="bullets-list success-bullets">
+                          <li *ngFor="let s of ans.parsedEval?.strengths">
+                            <svg class="bullet-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" width="12" height="12">
+                              <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            <span>{{ s }}</span>
+                          </li>
+                        </ul>
+                      </div>
+
+                      <!-- Grid Card 3: Areas for Improvement List -->
+                      <div class="feedback-metric-card improvements-card">
+                        <div class="metric-header text-warning">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A5 5 0 0 0 8 8c0 1 .3 1.8.9 2.5C9.7 11.3 10 12 10 13v1"></path>
+                            <line x1="9" y1="18" x2="15" y2="18"></line>
+                            <line x1="10" y1="22" x2="14" y2="22"></line>
+                          </svg>
+                          <span>{{ lang.currentLang() === 'en' ? 'Areas for Improvement' : 'نقاط التحسين' }}</span>
+                        </div>
+                        <ul class="bullets-list warning-bullets">
+                          <li *ngFor="let imp of ans.parsedEval?.improvements">
+                            <svg class="bullet-dot" viewBox="0 0 24 24" fill="currentColor" width="8" height="8">
+                              <circle cx="12" cy="12" r="8"></circle>
+                            </svg>
+                            <span>{{ imp }}</span>
+                          </li>
+                        </ul>
+                      </div>
+
+                      <!-- Grid Card 4: Criteria Progress Bars -->
+                      <div class="feedback-metric-card breakdown-card">
+                        <h5 class="breakdown-title">{{ lang.currentLang() === 'en' ? 'Detailed Score Breakdown' : 'تفاصيل الدرجة' }}</h5>
+                        <div class="breakdown-list">
+                          <div class="breakdown-item">
+                            <div class="breakdown-label-row">
+                              <span>{{ lang.currentLang() === 'en' ? 'Relevance' : 'الارتباط بالسؤال' }}</span>
+                              <span>{{ ans.parsedEval?.relevance }}/10</span>
+                            </div>
+                            <div class="progress-bar-bg">
+                              <div class="progress-bar-fill fill-green" [style.width.%]="ans.parsedEval?.relevance * 10"></div>
+                            </div>
+                          </div>
+                          
+                          <div class="breakdown-item">
+                            <div class="breakdown-label-row">
+                              <span>{{ lang.currentLang() === 'en' ? 'Technical Depth' : 'العمق التقني' }}</span>
+                              <span>{{ ans.parsedEval?.depth }}/10</span>
+                            </div>
+                            <div class="progress-bar-bg">
+                              <div class="progress-bar-fill fill-green" [style.width.%]="ans.parsedEval?.depth * 10"></div>
+                            </div>
+                          </div>
+
+                          <div class="breakdown-item">
+                            <div class="breakdown-label-row">
+                              <span>{{ lang.currentLang() === 'en' ? 'Project Impact' : 'أثر المشروع' }}</span>
+                              <span>{{ ans.parsedEval?.impact }}/10</span>
+                            </div>
+                            <div class="progress-bar-bg">
+                              <div class="progress-bar-fill fill-green" [style.width.%]="ans.parsedEval?.impact * 10"></div>
+                            </div>
+                          </div>
+
+                          <div class="breakdown-item">
+                            <div class="breakdown-label-row">
+                              <span>{{ lang.currentLang() === 'en' ? 'Communication' : 'التواصل' }}</span>
+                              <span>{{ ans.parsedEval?.comm }}/10</span>
+                            </div>
+                            <div class="progress-bar-bg">
+                              <div class="progress-bar-fill fill-green" [style.width.%]="ans.parsedEval?.comm * 10"></div>
+                            </div>
+                          </div>
+
+                          <div class="breakdown-item">
+                            <div class="breakdown-label-row">
+                              <span>{{ lang.currentLang() === 'en' ? 'Problem Solving' : 'حل المشكلات' }}</span>
+                              <span>{{ ans.parsedEval?.problem }}/10</span>
+                            </div>
+                            <div class="progress-bar-bg">
+                              <div class="progress-bar-fill fill-green" [style.width.%]="ans.parsedEval?.problem * 10"></div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Suggested Better Answer Section -->
+                  <div class="suggested-answer-box">
+                    <div class="suggested-header">
+                      <svg class="icon-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                      </svg>
+                      <span>{{ lang.currentLang() === 'en' ? 'Suggested Better Answer' : 'إجابة مقترحة أفضل' }}</span>
+                    </div>
+                    <div class="suggested-content">
+                      <p class="suggestion-text">"{{ ans.parsedEval?.suggestion }}"</p>
+                      <button type="button" class="btn-view-suggestion" (click)="viewFullSuggestion(ans.parsedEval?.suggestion)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="vertical-align: middle; margin-right: 4px;">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                          <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                        <span>{{ lang.currentLang() === 'en' ? 'View Full Suggestion' : 'عرض المقترح كاملاً' }}</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               }

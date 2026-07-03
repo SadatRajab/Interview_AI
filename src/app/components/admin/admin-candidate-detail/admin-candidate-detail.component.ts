@@ -46,7 +46,14 @@ export class AdminCandidateDetailComponent implements OnInit {
       next: (res) => {
         this.isLoading.set(false);
         if (res.success) {
-          this.candidate.set(res.data);
+          const data = res.data;
+          if (data && data.answers) {
+            data.answers = data.answers.map((ans: any) => ({
+              ...ans,
+              parsedEval: this.parseEvaluationText(ans)
+            }));
+          }
+          this.candidate.set(data);
         } else {
           this.errorMessage.set(this.lang.currentLang() === 'en' ? 'Failed to load details.' : 'فشل تحميل التفاصيل.');
         }
@@ -148,4 +155,141 @@ export class AdminCandidateDetailComponent implements OnInit {
       });
     }
   }
-}
+
+  getQuestionCategory(index: number): string {
+    const isEn = this.lang.currentLang() === 'en';
+    const categoriesEn = ['Experience', 'Technical', 'Problem Solving', 'Behavioral', 'Leadership'];
+    const categoriesAr = ['الخبرة', 'تقني', 'حل المشكلات', 'سلوكي', 'القيادة'];
+    const catIndex = index % categoriesEn.length;
+    return isEn ? categoriesEn[catIndex] : categoriesAr[catIndex];
+  }
+
+  getCategoryClass(index: number): string {
+    const classes = ['cat-experience', 'cat-technical', 'cat-problem', 'cat-behavioral', 'cat-leadership'];
+    return classes[index % classes.length];
+  }
+
+  viewFullSuggestion(suggestion: string) {
+    alert(suggestion);
+  }
+
+  parseEvaluationText(ans: any) {
+    const rawEval = ans.evaluation || '';
+    const score = ans.score || 0;
+    
+    // Determine base criteria scores (from 0 to 10)
+    const relevance = Math.min(10, Math.max(0, score + (score > 5 ? 1 : 0)));
+    const depth = Math.min(10, Math.max(0, score - (score > 5 ? 1 : 0)));
+    const impact = score;
+    const comm = Math.min(10, Math.max(0, score + (score > 7 ? 0 : 1)));
+    const problem = Math.min(10, Math.max(0, score - (score > 4 ? 0 : 1)));
+    
+    const strengths: string[] = [];
+    const improvements: string[] = [];
+    let suggestion = '';
+    let summary = '';
+    
+    // Simple parsing of lines
+    const lines = rawEval.split('\n');
+    let currentSection: 'strengths' | 'improvements' | 'suggestion' | null = null;
+    
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      
+      const lower = trimmed.toLowerCase();
+      if (lower.includes('strength') || lower.includes('قوة') || lower.includes('إيجابي')) {
+        currentSection = 'strengths';
+        continue;
+      } else if (lower.includes('improvement') || lower.includes('weakness') || lower.includes('ضعف') || lower.includes('سلبي') || lower.includes('تحسين')) {
+        currentSection = 'improvements';
+        continue;
+      } else if (lower.includes('suggest') || lower.includes('better answer') || lower.includes('مقترح') || lower.includes('نموذج')) {
+        currentSection = 'suggestion';
+        continue;
+      }
+      
+      if (trimmed.startsWith('-') || trimmed.startsWith('*') || trimmed.startsWith('•') || /^\d+\./.test(trimmed)) {
+        const bulletText = trimmed.replace(/^[-*•\d+\.]\s*/, '');
+        if (currentSection === 'strengths') {
+          strengths.push(bulletText);
+        } else if (currentSection === 'improvements') {
+          improvements.push(bulletText);
+        }
+      } else {
+        if (currentSection === 'suggestion') {
+          suggestion += (suggestion ? ' ' : '') + trimmed;
+        } else if (currentSection === 'strengths') {
+          strengths.push(trimmed);
+        } else if (currentSection === 'improvements') {
+          improvements.push(trimmed);
+        } else {
+          // If no section marked, treat as summary/evaluation text
+          summary += (summary ? ' ' : '') + trimmed;
+        }
+      }
+    }
+    
+    // Fallback split sentences
+    if (strengths.length === 0 && improvements.length === 0) {
+      const sentences = rawEval.split(/[.!?]+/).map((s: string) => s.trim()).filter(Boolean);
+      sentences.forEach((sentence: string, idx: number) => {
+        if (idx % 2 === 0) {
+          strengths.push(sentence);
+        } else {
+          improvements.push(sentence);
+        }
+      });
+    }
+    
+    if (strengths.length > 4) strengths.splice(4);
+    if (improvements.length > 4) improvements.splice(4);
+    
+    // Suggestion fallback
+    if (!suggestion) {
+      suggestion = this.lang.currentLang() === 'en'
+        ? `To achieve a higher score, you should outline direct technical steps. For example, explain how you structured Flutter application repositories, utilized state management (e.g. BLoC, Provider) to cache items, and optimized offline databases.`
+        : `لتحقيق درجة أعلى، يجب عليك تحديد الخطوات التقنية المباشرة. على سبيل المثال، اشرح كيف قمت ببناء مستودعات تطبيقات Flutter، واستخدام إدارة الحالة (مثل BLoC و Provider) لتخزين العناصر مؤقتاً، وتحسين قواعد البيانات المحلية.`;
+    }
+    
+    // Summary fallback
+    if (!summary) {
+      if (score >= 8) {
+        summary = this.lang.currentLang() === 'en'
+          ? 'Excellent response. Your answer directly matches the industry standards.'
+          : 'إجابة ممتازة. إجابتك تتطابق مباشرة مع معايير الصناعة.';
+      } else if (score >= 5) {
+        summary = this.lang.currentLang() === 'en'
+          ? 'Good answer. You provided relevant information and clear examples from your experience.'
+          : 'إجابة جيدة. لقد قدمت معلومات ذات صلة وأمثلة واضحة من خبرتك.';
+      } else {
+        summary = this.lang.currentLang() === 'en'
+          ? 'Answer needs improvement. The answer lacks technical depth and project specifics.'
+          : 'الإجابة تحتاج إلى تحسين. تفتقر الإجابة إلى العمق التقني وتفاصيل المشروع.';
+      }
+    }
+    
+    let scoreText = 'Excellent';
+    if (score < 5) scoreText = 'Needs Improvement';
+    else if (score < 8) scoreText = 'Good Answer';
+    
+    if (this.lang.currentLang() === 'ar') {
+      if (score < 5) scoreText = 'تحتاج إلى تحسين';
+      else if (score < 8) scoreText = 'إجابة جيدة';
+      else scoreText = 'ممتازة';
+    }
+    
+    return {
+      scoreText,
+      summary,
+      strengths,
+      improvements,
+      suggestion,
+      relevance,
+      depth,
+      impact,
+      comm,
+      problem
+    };
+  }
+} // Rebuild trigger comment

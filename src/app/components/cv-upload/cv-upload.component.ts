@@ -35,9 +35,12 @@ export class CvUploadComponent {
   ) {
     // Keep internal state in sync with service if service has text
     this.extractedText.set(this.interviewService.cvText());
+    // Refresh availability when landing on CV upload
+    this.interviewService.checkAvailability();
   }
 
   onFileSelected(event: Event) {
+    if (!this.interviewService.isAvailable()) return;
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
       this.selectedFile.set(input.files[0]);
@@ -45,11 +48,13 @@ export class CvUploadComponent {
   }
 
   triggerFileInput() {
+    if (!this.interviewService.isAvailable()) return;
     this.fileInput.nativeElement.click();
   }
 
   onDragOver(event: DragEvent) {
     event.preventDefault();
+    if (!this.interviewService.isAvailable()) return;
     this.isDragOver.set(true);
   }
 
@@ -60,6 +65,7 @@ export class CvUploadComponent {
   onDrop(event: DragEvent) {
     event.preventDefault();
     this.isDragOver.set(false);
+    if (!this.interviewService.isAvailable()) return;
     if (event.dataTransfer && event.dataTransfer.files.length > 0) {
       const file = event.dataTransfer.files[0];
       const validExtensions = ['.pdf', '.doc', '.docx', '.txt', '.png', '.jpg', '.jpeg'];

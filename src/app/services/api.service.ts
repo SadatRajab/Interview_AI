@@ -81,10 +81,10 @@ export class ApiService {
    * Start the interview — generates questions.
    * Requires agreement to terms.
    */
-  startInterview(interviewId: string, agreedToTerms: boolean): Observable<StartInterviewResponse> {
+  startInterview(interviewId: string, agreedToTerms: boolean, lang?: string): Observable<StartInterviewResponse> {
     return this.http.post<StartInterviewResponse>(
       `${this.API_BASE}/interview/start`,
-      { interviewId, agreedToTerms }
+      { interviewId, agreedToTerms, lang }
     );
   }
 
@@ -92,10 +92,10 @@ export class ApiService {
    * Submit an answer for a specific question.
    * Backend evaluates and scores it — but NEVER returns scores.
    */
-  submitAnswer(interviewId: string, questionIndex: number, answerText: string): Observable<SubmitAnswerResponse> {
+  submitAnswer(interviewId: string, questionIndex: number, answerText: string, lang?: string): Observable<SubmitAnswerResponse> {
     return this.http.post<SubmitAnswerResponse>(
       `${this.API_BASE}/interview/${interviewId}/answer`,
-      { questionIndex, answerText }
+      { questionIndex, answerText, lang }
     );
   }
 
@@ -127,6 +127,15 @@ export class ApiService {
   getInterviewStatus(interviewId: string): Observable<InterviewStatusResponse> {
     return this.http.get<InterviewStatusResponse>(
       `${this.API_BASE}/interview/${interviewId}/status`
+    );
+  }
+
+  /**
+   * Get the interview availability based on schedule and manual settings.
+   */
+  getInterviewAvailability(): Observable<any> {
+    return this.http.get<any>(
+      `${this.API_BASE}/interview/availability`
     );
   }
 }

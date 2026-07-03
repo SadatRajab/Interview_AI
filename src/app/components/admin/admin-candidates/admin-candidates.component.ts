@@ -167,4 +167,27 @@ export class AdminCandidatesComponent implements OnInit {
       });
     }
   }
+
+  deleteAllDuplicates() {
+    const confirmMessage = this.lang.text().DELETE_ALL_DUPLICATES_CONFIRM;
+    if (confirm(confirmMessage)) {
+      this.isLoading.set(true);
+      this.adminService.deleteAllDuplicates().subscribe({
+        next: (res) => {
+          this.isLoading.set(false);
+          if (res.success) {
+            alert(this.lang.currentLang() === 'en' ? 'All duplicate interviews deleted successfully.' : 'تم حذف كافة المقابلات المكررة بنجاح.');
+            this.loadCandidates();
+          }
+        },
+        error: (err) => {
+          this.isLoading.set(false);
+          const errAlert = this.lang.currentLang() === 'en'
+            ? 'Failed to delete duplicate interviews: '
+            : 'فشل حذف المقابلات المكررة: ';
+          alert(errAlert + (err?.error?.error || err.message));
+        }
+      });
+    }
+  }
 }

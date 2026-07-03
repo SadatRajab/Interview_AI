@@ -9,7 +9,9 @@
 
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
+const mongoose = require('mongoose');
 const Applicant = require('../models/Applicant');
+const Schedule = require('../models/Schedule');
 const config = require('../config/config');
 const logger = require('../utils/logger');
 
@@ -93,6 +95,7 @@ const getAllApplicants = async (req, res, next) => {
       
       return {
         _id: app._id,
+        sessionToken: app.sessionToken,
         applicantName: app.applicantName,
         email: app.email,
         phone: app.phone,
@@ -176,7 +179,8 @@ const getApplicantDetail = async (req, res, next) => {
     const { id } = req.params;
     logger.info(`Fetching detailed interview session data: ${id}`);
 
-    const applicant = await Applicant.findOne({ sessionToken: id });
+    const query = mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { sessionToken: id };
+    const applicant = await Applicant.findOne(query);
     if (!applicant) {
       return res.status(404).json({
         success: false,
@@ -210,7 +214,8 @@ const getApplicantDetail = async (req, res, next) => {
 const downloadCV = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const applicant = await Applicant.findOne({ sessionToken: id });
+    const query = mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { sessionToken: id };
+    const applicant = await Applicant.findOne(query);
 
     if (!applicant || !applicant.cvFilePath) {
       return res.status(404).json({
@@ -241,7 +246,8 @@ const deleteApplicant = async (req, res, next) => {
     const { id } = req.params;
     logger.info(`Deleting applicant interview session: ${id}`);
 
-    const applicant = await Applicant.findOne({ sessionToken: id });
+    const query = mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { sessionToken: id };
+    const applicant = await Applicant.findOne(query);
     if (!applicant) {
       return res.status(404).json({
         success: false,
@@ -261,7 +267,7 @@ const deleteApplicant = async (req, res, next) => {
     }
 
     // 2. Delete database document
-    await Applicant.findOneAndDelete({ sessionToken: id });
+    await Applicant.findOneAndDelete(query);
 
     res.json({
       success: true,
@@ -356,7 +362,8 @@ const updateStatus = async (req, res, next) => {
       });
     }
 
-    const applicant = await Applicant.findOneAndUpdate({ sessionToken: id }, { status }, { new: true });
+    const query = mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { sessionToken: id };
+    const applicant = await Applicant.findOneAndUpdate(query, { status }, { new: true });
     if (!applicant) {
       return res.status(404).json({
         success: false,
@@ -373,6 +380,221 @@ const updateStatus = async (req, res, next) => {
   }
 };
 
+/**
+ * GET /api/admin/schedule
+ * Retrieve current schedule settings.
+ */
+const getSchedule = async (req, res, next) => {
+  try {
+    let schedule = await Schedule.findOne().sort({ createdAt: -1 });
+    if (!schedule) {
+      schedule = {
+        startDate: new Date(),
+        endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // + 7 days
+        isManualOpen: true
+      };
+    }
+    res.json({
+      success: true,
+      data: schedule
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * POST /api/admin/schedule
+ * Create or update the schedule settings.
+ */
+const updateSchedule = async (req, res, next) => {
+  try {
+    const { startDate, endDate } = req.body;
+    if (!startDate || !endDate) {
+      return res.status(400).json({
+        success: false,
+        error: 'Start date and End date are required.'
+      });
+    }
+
+    let schedule = await Schedule.findOne().sort({ createdAt: -1 });
+    if (schedule) {
+      schedule.startDate = new Date(startDate);
+      schedule.endDate = new Date(endDate);
+      await schedule.save();
+    } else {
+      schedule = new Schedule({
+        startDate: new Date(startDate),
+        endDate: new Date(endDate),
+        isManualOpen: true
+      });
+      await schedule.save();
+    }
+
+    logger.info(`Schedule updated: Start: ${schedule.startDate}, End: ${schedule.endDate}`);
+    res.json({
+      success: true,
+      data: schedule
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * POST /api/admin/schedule/toggle
+ * Manually toggle the open/close override status.
+ */
+const toggleManualOpen = async (req, res, next) => {
+  try {
+    const { isManualOpen } = req.body;
+    if (isManualOpen === undefined) {
+      return res.status(400).json({
+        success: false,
+        error: 'isManualOpen boolean is required.'
+      });
+    }
+
+    let schedule = await Schedule.findOne().sort({ createdAt: -1 });
+    if (!schedule) {
+      schedule = new Schedule({
+        startDate: new Date(),
+        endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        isManualOpen: isManualOpen
+      });
+    } else {
+      schedule.isManualOpen = isManualOpen;
+    }
+
+    await schedule.save();
+    logger.info(`Manual open status updated to: ${isManualOpen}`);
+    res.json({
+      success: true,
+      data: schedule
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * GET /api/admin/duplicates
+ * Get all candidates flagged as duplicates.
+ */
+const getDuplicateCandidates = async (req, res, next) => {
+  try {
+    logger.info('Fetching duplicate candidates...');
+    const applicants = await Applicant.find({}).sort({ createdAt: -1 });
+
+    const emailMap = new Map();
+    const phoneMap = new Map();
+    const nameMap = new Map();
+
+    applicants.forEach(app => {
+      if (app.email) {
+        emailMap.set(app.email, (emailMap.get(app.email) || 0) + 1);
+      }
+      if (app.phone) {
+        phoneMap.set(app.phone, (phoneMap.get(app.phone) || 0) + 1);
+      }
+      if (app.applicantName) {
+        const normalized = app.applicantName.toLowerCase().trim();
+        nameMap.set(normalized, (nameMap.get(normalized) || 0) + 1);
+      }
+    });
+
+    const duplicates = applicants.filter(app => {
+      const isDupEmail = app.email && emailMap.get(app.email) > 1;
+      const isDupPhone = app.phone && phoneMap.get(app.phone) > 1;
+      const normalizedName = app.applicantName ? app.applicantName.toLowerCase().trim() : '';
+      const isDupName = normalizedName && nameMap.get(normalizedName) > 1;
+      return !!(isDupEmail || isDupPhone || isDupName);
+    }).map(app => {
+      return {
+        _id: app._id,
+        sessionToken: app.sessionToken,
+        applicantName: app.applicantName,
+        email: app.email,
+        phone: app.phone,
+        status: app.status,
+        cvOriginalName: app.cvOriginalName,
+        currentScore: app.currentScore,
+        finalScore: app.finalScore,
+        maxPossibleScore: app.maxPossibleScore,
+        violationCount: app.violationCount,
+        createdAt: app.createdAt,
+        isDuplicate: true
+      };
+    });
+
+    res.json({
+      success: true,
+      data: duplicates
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * DELETE /api/admin/duplicates
+ * Delete all duplicate candidates in bulk along with their physical CV files.
+ */
+const deleteAllDuplicates = async (req, res, next) => {
+  try {
+    logger.info('Bulk deleting all duplicate candidates...');
+    const applicants = await Applicant.find({});
+
+    const emailMap = new Map();
+    const phoneMap = new Map();
+    const nameMap = new Map();
+
+    applicants.forEach(app => {
+      if (app.email) {
+        emailMap.set(app.email, (emailMap.get(app.email) || 0) + 1);
+      }
+      if (app.phone) {
+        phoneMap.set(app.phone, (phoneMap.get(app.phone) || 0) + 1);
+      }
+      if (app.applicantName) {
+        const normalized = app.applicantName.toLowerCase().trim();
+        nameMap.set(normalized, (nameMap.get(normalized) || 0) + 1);
+      }
+    });
+
+    const duplicates = applicants.filter(app => {
+      const isDupEmail = app.email && emailMap.get(app.email) > 1;
+      const isDupPhone = app.phone && phoneMap.get(app.phone) > 1;
+      const normalizedName = app.applicantName ? app.applicantName.toLowerCase().trim() : '';
+      const isDupName = normalizedName && nameMap.get(normalizedName) > 1;
+      return !!(isDupEmail || isDupPhone || isDupName);
+    });
+
+    logger.info(`Found ${duplicates.length} duplicate records to delete.`);
+
+    for (const app of duplicates) {
+      if (app.cvFilePath) {
+        try {
+          if (fs.existsSync(app.cvFilePath)) {
+            fs.unlinkSync(app.cvFilePath);
+            logger.info(`Deleted CV file: ${app.cvFilePath}`);
+          }
+        } catch (err) {
+          logger.warn(`Failed to delete CV file: ${app.cvFilePath}`, { error: err.message });
+        }
+      }
+      await Applicant.findOneAndDelete({ sessionToken: app.sessionToken });
+    }
+
+    res.json({
+      success: true,
+      message: `Successfully deleted ${duplicates.length} duplicate interview sessions.`
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   login,
   getAllApplicants,
@@ -380,5 +602,10 @@ module.exports = {
   downloadCV,
   deleteApplicant,
   getStatistics,
-  updateStatus
+  updateStatus,
+  getSchedule,
+  updateSchedule,
+  toggleManualOpen,
+  getDuplicateCandidates,
+  deleteAllDuplicates
 };
